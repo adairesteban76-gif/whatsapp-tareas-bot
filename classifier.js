@@ -1,6 +1,6 @@
-const Anthropic = require("@anthropic-ai/sdk").default || require("@anthropic-ai/sdk");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const SYSTEM_PROMPT = `Eres un asistente clasificador de tareas académicas para un estudiante de 
 Ingeniería en Comunicaciones y Electrónica del IPN (ESIME).
@@ -41,27 +41,18 @@ REGLAS ESTRICTAS:
 
 async function clasificarTareas(texto) {
   try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Clasifica estas tareas:\n\n${texto}`,
-        },
-      ],
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      systemInstruction: SYSTEM_PROMPT,
     });
 
-    const raw = response.content[0].text.trim();
-
-    // Limpiar por si acaso trae backticks
+    const result = await model.generateContent(`Clasifica estas tareas:\n\n${texto}`);
+    const raw = result.response.text().trim();
     const clean = raw.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(clean);
-
     return parsed;
   } catch (error) {
-    console.error("Error al clasificar con Claude:", error.message);
+    console.error("Error al clasificar con Gemini:", error.message);
     return null;
   }
 }
