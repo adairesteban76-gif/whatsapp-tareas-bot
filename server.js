@@ -118,24 +118,16 @@ app.post("/webhook", async (req, res) => {
     respuesta = `No entendí eso. Escribe *ayuda* para ver los comandos disponibles.`;
 
   } else {
-    // ── Clasificar con Claude ──────────────────────────────────────────────────
-    twiml.message("⏳ Clasificando tus tareas...");
-    res.type("text/xml").send(twiml.toString());
-
+    // ── Clasificar con Gemini ──────────────────────────────────────────────────
     const resultado = await clasificarTareas(mensaje);
 
-    const twiml2 = new MessagingResponse();
-
     if (!resultado || Object.keys(resultado.materias).length === 0) {
-      twiml2.message(
+      respuesta =
         "🤔 No detecté tareas en tu mensaje. Intenta ser más específico, por ejemplo:\n\n" +
-        "_\"Tengo ejercicios de Cálculo del capítulo 4 y un circuito de Electrónica\"_"
-      );
+        "_\"Tengo ejercicios de Cálculo del capítulo 4 y un circuito de Electrónica\"_";
     } else {
-      // Guardar en storage
-      const tareasActualizadas = guardarTareas(userId, resultado.materias);
+      guardarTareas(userId, resultado.materias);
 
-      // Construir respuesta con lo nuevo
       let msg = `✅ *${resultado.resumen}*\n\n`;
       msg += "*Tareas agregadas:*\n\n";
 
@@ -149,10 +141,8 @@ app.post("/webhook", async (req, res) => {
       }
 
       msg += "_Escribe *ver* para ver todas tus tareas acumuladas._";
-      twiml2.message(msg);
+      respuesta = msg;
     }
-
-    return res.type("text/xml").send(twiml2.toString());
   }
 
   twiml.message(respuesta);
@@ -169,9 +159,13 @@ app.get("/", (req, res) => {
 });
 
 // ── Iniciar servidor ──────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`\n🤖 Bot de tareas iniciado en puerto ${PORT}`);
-  console.log(`📡 Webhook listo en: http://localhost:${PORT}/webhook`);
-  console.log(`\nPara exponer al internet: npx ngrok http ${PORT}\n`);
-});
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`\n🤖 Bot de tareas iniciado en puerto ${PORT}`);
+    console.log(`📡 Webhook listo en: http://localhost:${PORT}/webhook`);
+    console.log(`\nPara exponer al internet: npx ngrok http ${PORT}\n`);
+  });
+}
+
+module.exports = { app, emojiMateria, formatearTareas };
