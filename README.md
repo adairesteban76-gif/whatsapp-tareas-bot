@@ -1,26 +1,27 @@
-# 🤖 WhatsApp Tareas Bot — Clasificador con Claude AI
+# 🤖 WhatsApp Tareas Bot
 
-Bot de WhatsApp que clasifica tus tareas por materia **sin resolverlas**, 
-usando Claude AI como motor de inteligencia.
+Bot de WhatsApp que clasifica tus tareas por materia **sin resolverlas**,
+usando Google Gemini como motor de inteligencia.
 
 ---
 
-## ✨ Funciones
+## ✨ Comandos
 
 | Comando | Descripción |
 |---|---|
-| Enviar texto libre | Detecta y clasifica tareas por materia |
-| `ver` | Muestra todas las tareas pendientes |
-| `limpiar` | Borra todas las tareas |
+| Texto libre | Detecta y clasifica tus tareas por materia |
+| `ver` / `mis tareas` / `tareas` | Muestra todas las tareas pendientes |
 | `listo [Materia] [#]` | Marca una tarea como completada |
-| `ayuda` | Muestra el menú de ayuda |
+| `completar [Materia] [#]` | Igual que `listo` |
+| `limpiar` / `borrar todo` / `clear` | Borra todas las tareas |
+| `ayuda` / `help` / `hola` / `inicio` | Muestra el menú de ayuda |
 
 ---
 
 ## 📦 Instalación
 
 ```bash
-# 1. Clonar o descargar el proyecto
+# 1. Clonar el proyecto
 cd whatsapp-tareas-bot
 
 # 2. Instalar dependencias
@@ -40,12 +41,12 @@ cp .env.example .env
 2. Crea una cuenta gratuita
 3. Ve a **Messaging → Try it out → Send a WhatsApp message**
 4. Activa el sandbox escaneando el QR con tu WhatsApp
-5. Copia tu **Account SID** y **Auth Token**
+5. Copia tu **Account SID** y **Auth Token** en `.env`
 
-### 2. Anthropic API
-1. Ve a [console.anthropic.com](https://console.anthropic.com)
-2. Crea una API key
-3. Cópiala en `.env`
+### 2. Google Gemini API
+1. Ve a [aistudio.google.com](https://aistudio.google.com)
+2. Crea una API key (capa gratuita disponible)
+3. Cópiala en `.env` como `GEMINI_API_KEY`
 
 ---
 
@@ -70,10 +71,10 @@ Copia la URL de ngrok (ej: `https://abc123.ngrok.io`) y configúrala en Twilio:
 
 ## 💬 Ejemplo de uso
 
-**Tú escribes en WhatsApp:**
+**1. Agregar tareas** — escribe libremente:
 ```
-Tengo que terminar los ejercicios del capítulo 5 de Cálculo, resolver 
-el circuito RLC de la práctica 3 de Electrónica y estudiar para el 
+Tengo que terminar los ejercicios del capítulo 5 de Cálculo, resolver
+el circuito RLC de la práctica 3 de Electrónica y estudiar para el
 examen de Física de ondas mecánicas
 ```
 
@@ -81,7 +82,7 @@ examen de Física de ondas mecánicas
 ```
 ✅ 3 tareas clasificadas en 3 materias
 
-📐 Cálculo en Varias Variables
+📐 Cálculo
   ⬜ 1. Ejercicios del capítulo 5
 
 🔌 Electrónica
@@ -93,16 +94,55 @@ examen de Física de ondas mecánicas
 Escribe *ver* para ver todas tus tareas acumuladas.
 ```
 
+**2. Ver tareas:**
+```
+ver
+```
+
+**3. Marcar como completada** (usando materia y número de la lista):
+```
+listo Cálculo 1
+```
+```
+✅ Tarea marcada como completada en *Cálculo*.
+```
+
+**4. Borrar todo:**
+```
+limpiar
+```
+
+---
+
+## 🧪 Tests
+
+```bash
+npm test              # Ejecutar suite completa (68 tests)
+npm run test:coverage # Con reporte de cobertura (~96%)
+```
+
+Cobertura actual:
+
+| Archivo | Statements | Branches | Funciones | Líneas |
+|---|---|---|---|---|
+| `classifier.js` | 100% | 100% | 100% | 100% |
+| `storage.js` | 100% | 100% | 100% | 100% |
+| `server.js` | 94% | 91% | 86% | 94% |
+
 ---
 
 ## 📁 Estructura del proyecto
 
 ```
 whatsapp-tareas-bot/
-├── server.js        # Servidor Express + webhook Twilio
-├── classifier.js    # Integración con Claude API
-├── storage.js       # Almacenamiento en JSON local
-├── tareas.json      # Base de datos (se crea automático)
+├── __tests__/
+│   ├── classifier.test.js  # Tests de integración con Gemini (mockeado)
+│   ├── server.test.js      # Tests de rutas webhook y funciones auxiliares
+│   └── storage.test.js     # Tests de persistencia JSON
+├── server.js               # Servidor Express + webhook Twilio
+├── classifier.js           # Integración con Google Gemini
+├── storage.js              # Almacenamiento en JSON local
+├── tareas.json             # Base de datos (se crea automáticamente)
 ├── package.json
 ├── .env.example
 └── README.md
@@ -114,13 +154,15 @@ whatsapp-tareas-bot/
 
 - **Node.js + Express** — Servidor HTTP
 - **Twilio** — Integración WhatsApp
-- **Claude API (Sonnet 4.6)** — Clasificación inteligente
-- **JSON local** — Almacenamiento de tareas
+- **Google Gemini 1.5 Flash** — Clasificación inteligente de tareas
+- **JSON local** — Almacenamiento de tareas por usuario
+- **Jest + supertest** — Suite de tests
 
 ---
 
 ## 📌 Notas
 
-- Las tareas se guardan en `tareas.json` por número de WhatsApp
-- El bot **nunca resuelve** las tareas, solo clasifica
+- Las tareas se guardan en `tareas.json` separadas por número de WhatsApp
+- El bot **nunca resuelve** las tareas, solo las clasifica y organiza
 - Para producción, reemplaza el JSON por una base de datos real (MongoDB, SQLite, etc.)
+- Las materias reconocidas por defecto: Cálculo, Física, Electrónica, Circuitos, Comunicaciones, Estructuras, Programación, Álgebra Lineal, Otras
